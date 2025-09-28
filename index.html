@@ -401,6 +401,8 @@
     }
 
     const { correct, signs } = setupRound(10);
+    
+
     // build sign meshes
     let yStart = 2.6;
     const signMeshes = signs.map((c,i)=>createSign(c[0],c[1],c[2], yStart - i*0.45));
@@ -431,7 +433,7 @@ let lastSelected = null;
 
     function normalize(s){ return (s||'').trim().toUpperCase(); }
 
-  function handleGuess(){
+function handleGuess(){
       const raw = input.value;
       if(!lastSelected || raw !== lastSelected){
         showMessage('Please select a country from the list by clicking it.');
@@ -445,15 +447,25 @@ let lastSelected = null;
         const properName = nameToUpper.get(g) || g;
         endGame('Correct — the pole is in ' + properName + '!');
       } else {
-        if(revealedCount < maxReveals){
-          root.add(signMeshes[revealedCount]);
-          revealedCount++;
-          if(revealedCount >= maxReveals){
-            const properCorrect = nameToUpper.get(correct) || correct;
-            endGame('Game over — the location was: ' + properCorrect);
-          } else {
-            showMessage('No — keep trying.');
-          }
+        // create a new sign dynamically for the failed guess
+        const failedCountry = nameToUpper.get(g) || g;
+        const correctCoord = COUNTRY_COORDINATES[nameToUpper.get(correct) || correct];
+        const guessCoord = COUNTRY_COORDINATES[failedCountry];
+        let dist = 0, bearing = Math.floor(Math.random()*360);
+        if(correctCoord && guessCoord){
+          dist = Math.round(haversineDistance(correctCoord.lat, correctCoord.lon, guessCoord.lat, guessCoord.lon));
+          bearing = Math.round(bearingDeg(correctCoord.lat, correctCoord.lon, guessCoord.lat, guessCoord.lon));
+        }
+        const newSign = createSign(failedCountry.toUpperCase(), dist + " km", bearing, 2.6 - revealedCount*0.45);
+        signMeshes.push(newSign);
+        root.add(newSign);
+        revealedCount++;
+
+        if(revealedCount >= maxReveals){
+          const properCorrect = nameToUpper.get(correct) || correct;
+          endGame('Game over — the location was: ' + properCorrect);
+        } else {
+          showMessage('No — keep trying.');
         }
       }
       input.value = '';
@@ -462,7 +474,7 @@ let lastSelected = null;
     }
 
     button.addEventListener('click', handleGuess);
-input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ handleGuess(); } });
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ handleGuess(); } });
 
     // suggestions (contains, not startsWith)
     input.addEventListener('input', ()=>{
