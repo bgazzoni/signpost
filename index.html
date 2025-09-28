@@ -401,8 +401,6 @@
     }
 
     const { correct, signs } = setupRound(10);
-    document.getElementById('debugAnswer').textContent = 'DEBUG: Correct Answer = ' + (nameToUpper.get(correct) || correct);
-
     // build sign meshes
     let yStart = 2.6;
     const signMeshes = signs.map((c,i)=>createSign(c[0],c[1],c[2], yStart - i*0.45));
